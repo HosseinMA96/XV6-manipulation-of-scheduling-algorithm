@@ -19,6 +19,7 @@ static struct proc *initproc;
 int nextpid = 1;
 extern void forkret(void);
 extern void trapret(void);
+int defaultpolicy=0; //our policy is 1, and if change policy is called is simply switches between two
 
 static void wakeup1(void *chan);
 
@@ -571,6 +572,12 @@ getchilds(void)
 	cprintf("%s","childs\n\n");
         release(&ptable.lock);
 	return 22;
+}
 
-
+int
+changepolicy(void)
+{
+  defaultpolicy=(defaultpolicy+1)%2;
+  cprintf("%s","policy changed successfully");
+  return 23;
 }

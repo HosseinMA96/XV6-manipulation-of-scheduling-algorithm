@@ -11,6 +11,7 @@ int main (void) {
     if (n1 > 0 && n2 > 0 && n3 > 0 && n4 > 0) { 
       //  printf(1,"parent\n"); 
          getchilds(); 
+	 changepolicy();
     } 
 
     /* wait for all child to terminate */

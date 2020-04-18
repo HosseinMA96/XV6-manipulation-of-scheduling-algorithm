@@ -96,3 +96,9 @@ sys_getchilds(void)
 	return getchilds();
 }
 
+int
+sys_changepolicy(void)
+{
+	return changepolicy();
+}
+
