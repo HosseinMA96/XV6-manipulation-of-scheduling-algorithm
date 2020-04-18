@@ -17,6 +17,7 @@ void            brelse(struct buf*);
 void            bwrite(struct buf*);
 
 // console.c
+
 void            consoleinit(void);
 void            cprintf(char*, ...);
 void            consoleintr(int(*)(void));
@@ -120,6 +121,7 @@ void            userinit(void);
 int             wait(void);
 void            wakeup(void*);
 void            yield(void);
+int		getchilds(void);
 
 // swtch.S
 void            swtch(struct context**, struct context*);

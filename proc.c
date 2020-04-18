@@ -7,6 +7,8 @@
 #include "proc.h"
 #include "spinlock.h"
 
+
+
 struct {
   struct spinlock lock;
   struct proc proc[NPROC];
@@ -531,4 +533,44 @@ procdump(void)
     }
     cprintf("\n");
   }
+}
+
+int
+getchilds(void)
+{
+  struct proc *p;
+  int havekids;
+  struct proc *curproc = myproc();
+  
+  acquire(&ptable.lock);
+
+    // Scan through table looking for exited children.
+    havekids = 0;
+    for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+      if(p->parent != curproc)
+        continue;
+      
+	  if(havekids==0)
+	  {
+	  	havekids++;
+	  	cprintf("%d",p->pid);
+		//cprintf("%s","first\n\n");
+	  }
+	  
+	  else
+	  {
+	  	havekids++;
+	  	cprintf("%d",0);
+	  	cprintf("%d",p->pid);
+		//cprintf("%s","second\n\n");
+	  }
+    }
+	cprintf("\n");
+	cprintf("%s\t","totally had : ");
+	cprintf("%d",havekids);
+	cprintf("%s","childs\n\n");
+        release(&ptable.lock);
+	return 22;
+
+
 }
