@@ -20,6 +20,7 @@ int nextpid = 1;
 extern void forkret(void);
 extern void trapret(void);
 int defaultpolicy=0; //our policy is 1, and if change policy is called is simply switches between two
+int quantum=1; //default quantum value
 
 static void wakeup1(void *chan);
 
@@ -91,6 +92,9 @@ allocproc(void)
 found:
   p->state = EMBRYO;
   p->pid = nextpid++;
+  p->priority=10;
+  p->cpriority=0;
+
 
   release(&ptable.lock);
 
