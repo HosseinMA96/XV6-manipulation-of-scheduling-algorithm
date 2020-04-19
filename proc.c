@@ -20,7 +20,8 @@ int nextpid = 1;
 extern void forkret(void);
 extern void trapret(void);
 int defaultpolicy=0; //our policy is 1, and if change policy is called is simply switches between two
-int quantum=1; //default quantum value
+int quantum=5,counter;
+
 
 static void wakeup1(void *chan);
 
@@ -334,6 +335,8 @@ scheduler(void)
   c->proc = 0;
   
   for(;;){
+	
+    counter=0;
     // Enable interrupts on this processor.
     sti();
 
@@ -356,6 +359,15 @@ scheduler(void)
       // Process is done running for now.
       // It should have changed its p->state before coming back.
       c->proc = 0;
+
+	counter++;
+	
+	if(counter<quantum && p->state == RUNNABLE)
+	p--;
+	
+	if(counter==quantum)
+	counter=0;
+
     }
     release(&ptable.lock);
 
