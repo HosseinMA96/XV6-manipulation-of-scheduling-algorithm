@@ -20,7 +20,8 @@ int nextpid = 1;
 extern void forkret(void);
 extern void trapret(void);
 int defaultpolicy=0; //our policy is 1, and if change policy is called is simply switches between two
-int quantum=5,counter;
+int quantum=3,counter=0,violate=0,firstTime=1,keepid=-1;
+struct proc *last;
 
 
 static void wakeup1(void *chan);
@@ -331,11 +332,14 @@ void
 scheduler(void)
 {
   struct proc *p;
+  struct proc *p1;
+  
   struct cpu *c = mycpu();
   c->proc = 0;
   
   for(;;){
 	
+   struct proc *highp;
     counter=0;
     // Enable interrupts on this processor.
     sti();
@@ -346,9 +350,34 @@ scheduler(void)
       if(p->state != RUNNABLE)
         continue;
 
+      highp=p;
+	
+    for(p1 = ptable.proc; p1 < &ptable.proc[NPROC]; p1++){
+      if(p1->state != RUNNABLE)
+        continue;
+	
+    //  cprintf("%d\n",p1->priority);
+      if(p1->priority<highp->priority)
+      highp=p1;
+
+
+      }
+
       // Switch to chosen process.  It is the process's job
       // to release ptable.lock and then reacquire it
       // before jumping back to us.
+	
+      p=highp;
+
+ 	//if keepied is not equal to -1, then it stores a process id which must be chosen in this tick, because its quantum has not finished 
+	//yet, so it must be chosen irrespective of it's priority
+	if(keepid !=-1)
+	{
+            for(p1 = ptable.proc; p1 < &ptable.proc[NPROC]; p1++)
+            if(p1->state != RUNNABLE && p1->pid==keepid)
+            p=p1;
+	}
+
       c->proc = p;
       switchuvm(p);
       p->state = RUNNING;
@@ -358,15 +387,28 @@ scheduler(void)
 
       // Process is done running for now.
       // It should have changed its p->state before coming back.
-      c->proc = 0;
+        c->proc = 0;
 
+ 	
+
+	//At each tick, counter is incremented once so that we can understand when it reaches the quantum value so that this process will give 
+	//On cpu and waits to be selected again
 	counter++;
 	
+	//if counter has not yet reached quantum and the state of current process is still RUNNABLE, we need to select it for execution 
+	//in the next tick, so we save it's pid in keepid variable and at next tick we choose it
 	if(counter<quantum && p->state == RUNNABLE)
-	p--;
+	keepid=p->pid;
+
+	//if current process has reached its quantum or it is not RUNABBLE anymore, it needs to give up cpu, so that we set counter to 
+	//zero and keepid to -1	
+	else
+	{
+	  keepid=-1;
+	  counter=0;
+	}
 	
-	if(counter==quantum)
-	counter=0;
+
 
     }
     release(&ptable.lock);
