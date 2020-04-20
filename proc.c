@@ -357,7 +357,7 @@ scheduler(void)
         continue;
 	
     //  cprintf("%d\n",p1->priority);
-      if(p1->priority<highp->priority)
+      if(p1->cpriority<highp->cpriority)
       highp=p1;
 
 
@@ -375,7 +375,10 @@ scheduler(void)
 	{
             for(p1 = ptable.proc; p1 < &ptable.proc[NPROC]; p1++)
             if(p1->state != RUNNABLE && p1->pid==keepid)
-            p=p1;
+	    {
+            	p=p1;
+		break;
+  	    }
 	}
 
       c->proc = p;
@@ -406,6 +409,7 @@ scheduler(void)
 	{
 	  keepid=-1;
 	  counter=0;
+	  p->cpriority+=p->priority;
 	}
 	
 
