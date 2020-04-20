@@ -20,7 +20,7 @@ int nextpid = 1;
 extern void forkret(void);
 extern void trapret(void);
 int defaultpolicy=0; //our policy is 1, and if change policy is called is simply switches between two
-int quantum=3,counter=0,violate=0,firstTime=1,keepid=-1;
+int quantum=1,counter=0,violate=0,firstTime=1,keepid=-1;
 struct proc *last;
 
 
