@@ -10,11 +10,13 @@ struct sleeplock;
 struct stat;
 struct superblock;
 
+//We need creation time, running time, sleep time, waiting time and termination time.
 // bio.c
 void            binit(void);
 struct buf*     bread(uint, uint);
 void            brelse(struct buf*);
 void            bwrite(struct buf*);
+
 
 // console.c
 
@@ -122,8 +124,11 @@ int             wait(void);
 void            wakeup(void*);
 void            yield(void);
 int		getchilds(void);
+extern void     updatePtableTimes(void);
 int		changepolicy(void);
 int 		chpr(int pid,int priority);
+int		waitforchilds(void);
+void		updateTime(void);
 
 // swtch.S
 void            swtch(struct context**, struct context*);
@@ -141,7 +146,7 @@ void            popcli(void);
 void            acquiresleep(struct sleeplock*);
 void            releasesleep(struct sleeplock*);
 int             holdingsleep(struct sleeplock*);
-void            initsleeplock(struct sleeplock*, char*);
+extern void            initsleeplock(struct sleeplock*, char*);
 
 // string.c
 int             memcmp(const void*, const void*, uint);

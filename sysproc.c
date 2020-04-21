@@ -111,10 +111,13 @@ sys_chpr(void)
 
 	if(argint(1,&pr)<0)
 	return -1;
-
-
-
 	
 	return chpr(pid,pr);
+}
+
+int
+sys_waitforchilds(void)
+{
+	return waitforchilds();
 }
 

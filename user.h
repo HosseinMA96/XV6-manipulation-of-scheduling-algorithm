@@ -26,6 +26,7 @@ int uptime(void);
 int getchilds(void);
 int changepolicy(void);
 int chpr(int pid,int priority);
+int waitforchilds(void);
 
 // ulib.c
 int stat(const char*, struct stat*);

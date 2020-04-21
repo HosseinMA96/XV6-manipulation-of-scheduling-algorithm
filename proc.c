@@ -96,6 +96,15 @@ found:
   p->pid = nextpid++;
   p->priority=10;
   p->cpriority=0;
+  p->creationTime=ticks;
+ // cprintf("%d running time ticks : ",ticks);  
+ // cprintf("\n");
+
+
+  p->sleepingTime=0;
+  p->waitingTime=0;
+  p->runningTime=0;
+
 
 
   release(&ptable.lock);
@@ -236,7 +245,11 @@ fork(void)
 void
 exit(void)
 {
+
   struct proc *curproc = myproc();
+  struct proc *p2=curproc;
+
+  p2->terminationTime=ticks;
   struct proc *p;
   int fd;
 
@@ -275,6 +288,9 @@ exit(void)
   sched();
   panic("zombie exit");
 }
+
+
+	
 
 // Wait for a child process to exit and return its pid.
 // Return -1 if this process has no children.
@@ -320,6 +336,71 @@ wait(void)
   }
 }
 
+int
+waitforchilds(void)
+{
+  struct proc *p;
+  int havekids, pid;
+  struct proc *curproc = myproc();
+  
+  acquire(&ptable.lock);
+  for(;;){
+    // Scan through table looking for exited children.
+    havekids = 0;
+
+    for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+      if(p->parent != curproc)
+        continue;
+      havekids++;
+
+      
+
+      if(p->state == ZOMBIE){
+        // Found one.
+        pid = p->pid;
+	//c=pid;
+        kfree(p->kstack);
+        p->kstack = 0;
+        freevm(p->pgdir);
+        p->pid = 0;
+        p->parent = 0;
+        p->name[0] = 0;
+        p->killed = 0;
+        p->state = UNUSED;
+        release(&ptable.lock);
+
+//	cprintf("%s%d%s%d%s%d%s%d%s%d%s%d%s%d\n\n","This process had a child with id : ",c," creation tick: ",p->creationTime," termination tick: ",p->terminationTime," waitingTicks/QUANTUM : ",p->waitingTime/QUANTUM," runningTicks/QUANTUM : ",p->runningTime/QUANTUM," waitingTicks/QUANTUM : ",p->waitingTime/QUANTUM," sleepingTicks/QUANTUM : ",p->sleepingTime/QUANTUM);
+	
+	int sum=p->waitingTime+p->sleepingTime+p->runningTime;
+	int dif=p->terminationTime-p->creationTime;
+
+//	cprintf("%s%d\t","Quantum : ",QUANTUM);
+	cprintf("%s%d\t","Waiting ticks : ",p->waitingTime);
+	cprintf("%s%d\t","Sleeping ticks : ",p->sleepingTime);
+	cprintf("%s%d\t","Creation Time : ",p->creationTime);	
+	cprintf("%s%d\t","Termination time : ",p->terminationTime);
+	cprintf("%s%d\t","Running time : ",p->runningTime);
+//	cprintf("%s%d\t","zombie  : ",p->zombieTime);
+	cprintf("%s%d\t","Turnaround time : ",dif);	
+	cprintf("%s%d\t","sum  : ",sum);	
+	cprintf("%s%d\t","\n\n");
+        return pid;
+      }
+    }
+	
+    cprintf("%s%d\n","\nhaveKids=  ",havekids);
+    // No point waiting if we don't have any children.
+    if(!havekids || curproc->killed){
+      cprintf("%s\n","I'm quiting");
+      release(&ptable.lock);
+      return -1;
+    }
+
+    // Wait for children to exit.  (See wakeup1 call in proc_exit.)
+    sleep(curproc, &ptable.lock);  //DOC: wait-sleep
+  }
+}
+
 //PAGEBREAK: 42
 // Per-CPU process scheduler.
 // Each CPU calls scheduler() after setting itself up.
@@ -333,12 +414,15 @@ scheduler(void)
 {
   struct proc *p;
   struct proc *p1;
+  struct proc *p2;
+  struct proc *p3;
   
   struct cpu *c = mycpu();
   c->proc = 0;
   
   for(;;){
 	
+
    struct proc *highp;
     counter=0;
     // Enable interrupts on this processor.
@@ -346,7 +430,12 @@ scheduler(void)
 
     // Loop over process table looking for process to run.
     acquire(&ptable.lock);
+
+
     for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+
+
+
       if(p->state != RUNNABLE)
         continue;
 
@@ -373,17 +462,44 @@ scheduler(void)
 	//yet, so it must be chosen irrespective of it's priority
 	if(keepid !=-1)
 	{
-            for(p1 = ptable.proc; p1 < &ptable.proc[NPROC]; p1++)
-            if(p1->state != RUNNABLE && p1->pid==keepid)
+            for(p3 = ptable.proc; p3 < &ptable.proc[NPROC]; p3++)
 	    {
-            	p=p1;
-		break;
+                 if(p3->state != RUNNABLE && p3->pid==keepid){
+           	 p=p3;
+		 break;
+		}
+		
+	
+		
   	    }
 	}
+
+	
+	for(p2 = ptable.proc; p2 < &ptable.proc[NPROC]; p2++)
+     	{
+	  if(p2->state==SLEEPING)
+		p2->sleepingTime++;
+
+	  if(p2->state==RUNNABLE)
+		p2->waitingTime++;
+ 
+
+
+	  
+ 
+        }
 
       c->proc = p;
       switchuvm(p);
       p->state = RUNNING;
+      p->runningTime++;
+      p->waitingTime--;
+
+	
+     //Also at each state, update the runningTime of the current process. (we had considered current process as RUNNABLE but now we need to modify our assumption becaus it has the cpu
+    //  p->waitingTime--;
+    //  p->runningTime++;
+
 
       swtch(&(c->scheduler), p->context);
       switchkvm();
@@ -400,7 +516,7 @@ scheduler(void)
 	
 	//if counter has not yet reached quantum and the state of current process is still RUNNABLE, we need to select it for execution 
 	//in the next tick, so we save it's pid in keepid variable and at next tick we choose it
-	if(counter<quantum && p->state == RUNNABLE)
+	if(counter<QUANTUM && p->state == RUNNABLE)
 	keepid=p->pid;
 
 	//if current process has reached its quantum or it is not RUNABBLE anymore, it needs to give up cpu, so that we set counter to 
@@ -419,6 +535,8 @@ scheduler(void)
 
   }
 }
+
+
 
 // Enter scheduler.  Must hold only ptable.lock
 // and have changed proc->state. Saves and restores
@@ -444,6 +562,8 @@ sched(void)
   intena = mycpu()->intena;
   swtch(&p->context, mycpu()->scheduler);
   mycpu()->intena = intena;
+
+//    p->terminationTime=ticks;
 }
 
 // Give up the CPU for one scheduling round.
@@ -550,6 +670,7 @@ kill(int pid)
   for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
     if(p->pid == pid){
       p->killed = 1;
+
       // Wake process from sleep if necessary.
       if(p->state == SLEEPING)
         p->state = RUNNABLE;
@@ -660,5 +781,22 @@ chpr(int pid,int priority)
 	}
 	release(&ptable.lock);
 	return pid;
+}
+
+void updatePtableTimes(){
+  struct proc *p;
+  sti();
+  acquire(&ptable.lock);
+  for (p=ptable.proc; p < &ptable.proc[NPROC]; p++)
+  {
+    if (p -> state == SLEEPING)
+      p -> sleepingTime++;
+    else if (p -> state == RUNNING)
+      p -> runningTime++;
+    else if (p -> state == RUNNABLE)
+      p -> waitingTime++;
+  }
+  release(&ptable.lock);
+
 }
 

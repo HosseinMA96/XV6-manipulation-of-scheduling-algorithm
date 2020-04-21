@@ -23,3 +23,4 @@
 #define SYS_getchilds  22
 #define SYS_changepolicy 23
 #define SYS_chpr 24
+#define SYS_waitforchilds 25

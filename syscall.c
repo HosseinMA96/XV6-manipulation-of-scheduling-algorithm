@@ -106,6 +106,7 @@ extern int sys_uptime(void);
 extern int sys_getchilds(void);
 extern int sys_changepolicy(void);
 extern int sys_chpr(void);
+extern int sys_waitforchilds(void);
 
 static int (*syscalls[])(void) = {
 [SYS_fork]  	  sys_fork,
@@ -132,6 +133,7 @@ static int (*syscalls[])(void) = {
 [SYS_getchilds]   sys_getchilds,
 [SYS_changepolicy] sys_changepolicy,
 [SYS_chpr]	  sys_chpr,
+[SYS_waitforchilds] sys_waitforchilds,
 };
 
 void
