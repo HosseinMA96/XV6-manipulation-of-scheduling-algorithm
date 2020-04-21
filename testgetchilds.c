@@ -76,7 +76,8 @@ int main (void) {
       //  printf(1,"parent\n"); 
          getchilds(); 
 //	 changepolicy();
-	 while(waitforchilds() != -1) { }
+	 //while(waitforchilds() != -1) { }
+	waitforchilds();
     } //when a program calls waitforchilds, it's a curproc. make a system call to run waitforchilds
 
     /* wait for all child to terminate */

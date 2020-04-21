@@ -118,6 +118,7 @@ sys_chpr(void)
 int
 sys_waitforchilds(void)
 {
-	return waitforchilds();
+	while(waitforchilds() != -1) { }
+	return -1;
 }
 
