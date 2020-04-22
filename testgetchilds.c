@@ -34,7 +34,8 @@ int dosomework(void)
 }
 
 int main (void) {
-	
+
+    changepolicy(2);
     int n1,n2,n3,n4;
 
    
@@ -75,7 +76,7 @@ int main (void) {
     if (n1 > 0 && n2 > 0 && n3 > 0 && n4 > 0) { 
       //  printf(1,"parent\n"); 
          getchilds(); 
-//	 changepolicy();
+	 
 	 //while(waitforchilds() != -1) { }
 	waitforchilds();
     } //when a program calls waitforchilds, it's a curproc. make a system call to run waitforchilds

@@ -24,7 +24,7 @@ char* sbrk(int);
 int sleep(int);
 int uptime(void);
 int getchilds(void);
-int changepolicy(void);
+int changepolicy(int);
 int chpr(int pid,int priority);
 int waitforchilds(void);
 

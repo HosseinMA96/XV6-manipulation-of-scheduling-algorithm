@@ -19,7 +19,7 @@ static struct proc *initproc;
 int nextpid = 1;
 extern void forkret(void);
 extern void trapret(void);
-int defaultpolicy=0; //our policy is 1, and if change policy is called is simply switches between two
+int policy=0; //our policy is 1, and if change policy is called is simply switches between two
 int quantum=1,counter=0,violate=0,firstTime=1,keepid=-1;
 struct proc *last;
 
@@ -401,6 +401,180 @@ waitforchilds(void)
   }
 }
 
+
+
+//default scheduler
+void
+scheduler1 (void)
+{
+  struct proc *p;
+  struct proc *p1;
+  struct cpu *c = mycpu();
+  c->proc = 0;
+  
+  for(;;){
+    // Enable interrupts on this processor.
+    sti();
+
+    // Loop over process table looking for process to run.
+    acquire(&ptable.lock);
+    for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+      if(p->state != RUNNABLE)
+        continue;
+	
+      for(p1 = ptable.proc; p1 < &ptable.proc[NPROC]; p1++)
+      {
+	if(p1->state==SLEEPING)
+		p1->sleepingTime++;
+
+	if(p1->state==RUNNABLE)
+		p1->waitingTime++;
+
+      }	
+
+      // Switch to chosen process.  It is the process's job
+      // to release ptable.lock and then reacquire it
+      // before jumping back to us.
+      c->proc = p;
+      switchuvm(p);
+      p->state = RUNNING;
+     
+      p->runningTime++;
+      p->waitingTime--;
+
+
+      swtch(&(c->scheduler), p->context);
+      switchkvm();
+
+      // Process is done running for now.
+      // It should have changed its p->state before coming back.
+      c->proc = 0;
+    }
+    release(&ptable.lock);
+
+  }
+
+}
+
+void
+scheduler2(void)
+{
+
+
+  struct proc *p;
+  struct proc *p2;
+  struct proc *p3;
+  
+  struct cpu *c = mycpu();
+  c->proc = 0;
+  
+  for(;;){
+	
+
+
+    counter=0;
+    // Enable interrupts on this processor.
+    sti();
+
+    // Loop over process table looking for process to run.
+    acquire(&ptable.lock);
+
+
+    for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+
+
+
+      if(p->state != RUNNABLE)
+        continue;
+
+
+
+      // Switch to chosen process.  It is the process's job
+      // to release ptable.lock and then reacquire it
+      // before jumping back to us.
+	
+    
+
+ 	//if keepied is not equal to -1, then it stores a process id which must be chosen in this tick, because its quantum has not finished 
+	//yet, so it must be chosen irrespective of it's priority
+	if(keepid !=-1)
+	{
+            for(p3 = ptable.proc; p3 < &ptable.proc[NPROC]; p3++)
+	    {
+                 if(p3->state != RUNNABLE && p3->pid==keepid){
+           	 p=p3;
+		 break;
+		}
+		
+	
+		
+  	    }
+	}
+
+	
+	for(p2 = ptable.proc; p2 < &ptable.proc[NPROC]; p2++)
+     	{
+	  if(p2->state==SLEEPING)
+		p2->sleepingTime++;
+
+	  if(p2->state==RUNNABLE)
+		p2->waitingTime++;
+ 
+
+
+	  
+ 
+        }
+
+      c->proc = p;
+      switchuvm(p);
+      p->state = RUNNING;
+      p->runningTime++;
+      p->waitingTime--;
+
+	
+     //Also at each state, update the runningTime of the current process. (we had considered current process as RUNNABLE but now we need to modify our assumption becaus it has the cpu
+    //  p->waitingTime--;
+    //  p->runningTime++;
+
+
+      swtch(&(c->scheduler), p->context);
+      switchkvm();
+
+      // Process is done running for now.
+      // It should have changed its p->state before coming back.
+        c->proc = 0;
+
+ 	
+
+	//At each tick, counter is incremented once so that we can understand when it reaches the quantum value so that this process will give 
+	//On cpu and waits to be selected again
+	counter++;
+	
+	//if counter has not yet reached quantum and the state of current process is still RUNNABLE, we need to select it for execution 
+	//in the next tick, so we save it's pid in keepid variable and at next tick we choose it
+	if(counter<QUANTUM && p->state == RUNNABLE)
+	keepid=p->pid;
+
+	//if current process has reached its quantum or it is not RUNABBLE anymore, it needs to give up cpu, so that we set counter to 
+	//zero and keepid to -1	
+	else
+	{
+	  keepid=-1;
+	  counter=0;
+
+	}
+	
+
+
+    }
+    release(&ptable.lock);
+
+  }
+	
+}
+
+
 //PAGEBREAK: 42
 // Per-CPU process scheduler.
 // Each CPU calls scheduler() after setting itself up.
@@ -412,6 +586,23 @@ waitforchilds(void)
 void
 scheduler(void)
 {
+  int ignore=0;
+
+  if(policy==1)
+  {
+	ignore=1;
+	scheduler1();
+  }
+	
+
+  if(policy==2 && ignore==0)
+  {
+	ignore=1;
+	scheduler2();
+  }
+
+	
+
   struct proc *p;
   struct proc *p1;
   struct proc *p2;
@@ -420,6 +611,7 @@ scheduler(void)
   struct cpu *c = mycpu();
   c->proc = 0;
   
+ //if(ignore==0)
   for(;;){
 	
 
@@ -534,6 +726,8 @@ scheduler(void)
     release(&ptable.lock);
 
   }
+  
+
 }
 
 
@@ -758,9 +952,14 @@ getchilds(void)
 }
 
 int
-changepolicy(void)
+changepolicy (int p)
 {
-  defaultpolicy=(defaultpolicy+1)%2;
+  policy=p;
+	
+  //Use default policy if input is invalid
+  if(policy<0 || policy>2)
+  	policy=1;
+
   cprintf("%s","policy changed successfully");
   return 23;
 }
