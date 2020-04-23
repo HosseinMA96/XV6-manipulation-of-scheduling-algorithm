@@ -50,11 +50,19 @@ int pow2(int k)
 int main()
 {
    // //  changepolicy(2);
+	//changequantum(1);
+	//changequantum(1);
+	//changequantum(1);
+	//changequantum(1);
+	//changequantum(1);
+	//changequantum(1);
+	//changequantum(1);
+
 	
     
 
   
-   int nForks=10;
+   int nForks=6;
 
    int n[10];
    /*	
