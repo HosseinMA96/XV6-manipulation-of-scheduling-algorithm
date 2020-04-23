@@ -374,14 +374,14 @@ waitforchilds(void)
 	
 	int dif=p->terminationTime-p->creationTime;
 	
-        avgWT+=p->waitingTime;
+       // avgWT+=p->waitingTime;
 	//cprintf("%d\n",avgWT);
 	
-	avgSLP+=p->sleepingTime;
+	//avgSLP+=p->sleepingTime;
 	avgTRT+=dif;
-	avgRNT+=p->runningTime;
+	//avgRNT+=p->runningTime;
 	
-	childs++;
+	//childs++;
 	//cprintf("%d\n",childs);
 
 //	cprintf("%s%d\t","Quantum : ",QUANTUM);
@@ -597,6 +597,7 @@ scheduler2(void)
 void
 scheduler(void)
 {
+  
   int ignore=0;
 
   if(policy==1)
@@ -616,7 +617,7 @@ scheduler(void)
 
   struct proc *p;
   struct proc *p1;
-  struct proc *p2;
+  //struct proc *p2;
   struct proc *p3;
   
   struct cpu *c = mycpu();
@@ -677,7 +678,7 @@ scheduler(void)
   	    }
 	}
 
-	
+	/*
 	for(p2 = ptable.proc; p2 < &ptable.proc[NPROC]; p2++)
      	{
 	  if(p2->state==SLEEPING)
@@ -691,12 +692,12 @@ scheduler(void)
 	  
  
         }
-
+	*/
       c->proc = p;
       switchuvm(p);
       p->state = RUNNING;
-      p->runningTime++;
-      p->waitingTime--;
+   //   p->runningTime++;
+   //   p->waitingTime--;
 
 	
      //Also at each state, update the runningTime of the current process. (we had considered current process as RUNNABLE but now we need to modify our assumption becaus it has the cpu
@@ -1023,11 +1024,11 @@ changequantum(int q)
 	
   
    //cprintf("%s%d%s%d%s%d%s%d%s%d","WT=",avgWT,"\tSLP=",avgSLP,"\tTR=",avgTRT,"\tRNT=",avgRNT,"\tchld=",childs);
-   avgWT=0;
-   avgSLP=0;
-   avgTRT=0;
-   avgRNT=0;
-   childs=0;
+   //avgWT=0;
+  // avgSLP=0;
+  // avgTRT=0;
+ //  avgRNT=0;
+//   childs=0;
 
    return 26;
 }
@@ -1040,4 +1041,31 @@ result(void)
 	cprintf("%s%d%s%d%s%d%s%d%s%d","WT=",avgWT,"\tSLP=",avgSLP,"\tTR=",avgTRT,"\tRNT=",avgRNT,"\tquantum=",quantum);
 
 return 28;
+}
+
+void
+update(void)
+{
+  struct proc *p;
+  sti();
+  acquire(&ptable.lock);
+  for (p=ptable.proc; p < &ptable.proc[NPROC]; p++)
+  {
+    if (p -> state == SLEEPING){
+      p -> sleepingTime++;
+      avgSLP++;
+     }
+     if (p -> state == RUNNING){
+      p -> runningTime++;
+      avgRNT++;
+      }
+     if (p -> state == RUNNABLE){
+      p -> waitingTime ++;
+      avgWT++;
+      }
+  }
+  release(&ptable.lock);
+
+
+	//cprintf("%s","\nUpdate\n");
 }

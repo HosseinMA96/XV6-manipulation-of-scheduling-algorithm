@@ -49,14 +49,15 @@ int pow2(int k)
 
 int main()
 {
-      changepolicy(2);
+   // //  changepolicy(2);
 	
     
 
   
-   
+   int nForks=10;
+
    int n[10];
-	
+   /*	
    for (int i=0;i<10;i++)
    {
 	n[i]=fork();
@@ -67,24 +68,53 @@ int main()
 	
 	waitforchilds();
     }
+    */
+   //  changequantum(2);
+
+     for (int i = 0; i < nForks; i++)
+    {
+        n[i]=fork();
+        if (n[i]== 0)
+        {
+          //  changePriority(i / class_num);
+            for (int j = 0; j < 1000; j++)
+                printf(1, "%d: %d\n", (i+1), (j+1));
+	    
+            int ex=0;
+
+	    for (int k=0;k<nForks;k++)
+		{
+		   if(n[k]==0)
+	           {
+			ex=1;
+			break;
+		   }
+		}
+		
+	    if(ex)
+            exit();
+	   
+        }
+	//waitshowaverage();
+    }
 
     int tell=1;
 
-    for (int i=0;i<10;i++)
+
+      for (int i=0;i<nForks;i++)
     	if(n[i]==0)
 	{
 		tell=0;
 		break;
 	}
 	
-
+	 
 	
     if(tell==1)	
     {
-	while(wait() != -1)
-	{}
 	
 	
+	waitshowaverage();
 	result();
 	  
     }

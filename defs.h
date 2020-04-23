@@ -132,6 +132,7 @@ void		updateTime(void);
 int		changequantum(int);
 int		waitshowaverage(void);
 int		result(void);
+extern void	update(void);
 
 // swtch.S
 void            swtch(struct context**, struct context*);
