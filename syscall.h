@@ -24,3 +24,6 @@
 #define SYS_changepolicy 23
 #define SYS_chpr 24
 #define SYS_waitforchilds 25
+#define SYS_changequantum 26
+#define SYS_waitshowaverage 27
+#define	SYS_result 28

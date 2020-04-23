@@ -27,6 +27,9 @@ int getchilds(void);
 int changepolicy(int);
 int chpr(int pid,int priority);
 int waitforchilds(void);
+int changequantum(int);
+int waitshowaverage(void);
+int result(void);
 
 // ulib.c
 int stat(const char*, struct stat*);

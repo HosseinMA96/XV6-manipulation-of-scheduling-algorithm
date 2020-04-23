@@ -117,9 +117,28 @@ sys_chpr(void)
 }
 
 int
+sys_changequantum(int k)
+{
+	return changequantum(k);
+}
+
+int
+sys_waitshowaverage()
+{
+	  return waitshowaverage();
+}
+
+int
 sys_waitforchilds(void)
 {
-	while(waitforchilds() != -1) { }
-	return -1;
+   while(waitforchilds() != -1){}
+   
+   return -1;
+}
+
+int
+sys_result(void)
+{
+	return result();
 }
 

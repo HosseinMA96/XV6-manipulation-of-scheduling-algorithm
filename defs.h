@@ -129,6 +129,9 @@ extern int	changepolicy(int);
 int 		chpr(int pid,int priority);
 int		waitforchilds(void);
 void		updateTime(void);
+int		changequantum(int);
+int		waitshowaverage(void);
+int		result(void);
 
 // swtch.S
 void            swtch(struct context**, struct context*);

@@ -20,7 +20,7 @@ int nextpid = 1;
 extern void forkret(void);
 extern void trapret(void);
 int policy=0; //our policy is 1, and if change policy is called is simply switches between two
-int quantum=1,counter=0,violate=0,firstTime=1,keepid=-1;
+int quantum=1,counter=0,violate=0,firstTime=1,keepid=-1,avgWT=0,avgSLP=0,avgTRT=0,avgRNT=0,childs=0;
 struct proc *last;
 
 
@@ -371,27 +371,37 @@ waitforchilds(void)
 
 //	cprintf("%s%d%s%d%s%d%s%d%s%d%s%d%s%d\n\n","This process had a child with id : ",c," creation tick: ",p->creationTime," termination tick: ",p->terminationTime," waitingTicks/QUANTUM : ",p->waitingTime/QUANTUM," runningTicks/QUANTUM : ",p->runningTime/QUANTUM," waitingTicks/QUANTUM : ",p->waitingTime/QUANTUM," sleepingTicks/QUANTUM : ",p->sleepingTime/QUANTUM);
 	
-	int sum=p->waitingTime+p->sleepingTime+p->runningTime;
+	
 	int dif=p->terminationTime-p->creationTime;
+	
+        avgWT+=p->waitingTime;
+	//cprintf("%d\n",avgWT);
+	
+	avgSLP+=p->sleepingTime;
+	avgTRT+=dif;
+	avgRNT+=p->runningTime;
+	
+	childs++;
+	//cprintf("%d\n",childs);
 
 //	cprintf("%s%d\t","Quantum : ",QUANTUM);
-	cprintf("%s%d\t","Waiting ticks : ",p->waitingTime);
-	cprintf("%s%d\t","Sleeping ticks : ",p->sleepingTime);
-	cprintf("%s%d\t","Creation Time : ",p->creationTime);	
-	cprintf("%s%d\t","Termination time : ",p->terminationTime);
-	cprintf("%s%d\t","Running time : ",p->runningTime);
+	//cprintf("%s%d\t","Waiting ticks : ",p->waitingTime);
+	//cprintf("%s%d\t","Sleeping ticks : ",p->sleepingTime);
+	//cprintf("%s%d\t","Creation Time : ",p->creationTime);	
+	//cprintf("%s%d\t","Termination time : ",p->terminationTime);
+	//cprintf("%s%d\t","Running time : ",p->runningTime);
 //	cprintf("%s%d\t","zombie  : ",p->zombieTime);
-	cprintf("%s%d\t","Turnaround time : ",dif);	
-	cprintf("%s%d\t","sum  : ",sum);	
-	cprintf("%s%d\t","\n\n");
+	//cprintf("%s%d\t","Turnaround time : ",dif);	
+	//cprintf("%s%d\t","sum  : ",sum);	
+	//cprintf("%s%d\t","\n\n");
         return pid;
       }
     }
 	
-    cprintf("%s%d\n","\nhaveKids=  ",havekids);
+  //  cprintf("%s%d\n","\nhaveKids=  ",havekids);
     // No point waiting if we don't have any children.
     if(!havekids || curproc->killed){
-      cprintf("%s\n","I'm quiting");
+    //  cprintf("%s\n","I'm quiting");
       release(&ptable.lock);
       return -1;
     }
@@ -399,6 +409,7 @@ waitforchilds(void)
     // Wait for children to exit.  (See wakeup1 call in proc_exit.)
     sleep(curproc, &ptable.lock);  //DOC: wait-sleep
   }
+	return 2;
 }
 
 
@@ -960,7 +971,7 @@ changepolicy (int p)
   if(policy<0 || policy>2)
   	policy=1;
 
-  cprintf("%s","policy changed successfully");
+  cprintf("%s","policy changed successfully\n\n");
   return 23;
 }
 
@@ -982,20 +993,51 @@ chpr(int pid,int priority)
 	return pid;
 }
 
-void updatePtableTimes(){
-  struct proc *p;
-  sti();
-  acquire(&ptable.lock);
-  for (p=ptable.proc; p < &ptable.proc[NPROC]; p++)
-  {
-    if (p -> state == SLEEPING)
-      p -> sleepingTime++;
-    else if (p -> state == RUNNING)
-      p -> runningTime++;
-    else if (p -> state == RUNNABLE)
-      p -> waitingTime++;
-  }
-  release(&ptable.lock);
 
+
+//calculate statistics
+int 
+waitshowaverage(void)
+{
+
+       	while(waitforchilds()!=-1){}
+
+	
+	//cprintf("%s%d%s%d%s%d%s%d%s%d","WT=",avgWT,"\tSLP=",avgSLP,"\tTR=",avgTRT,"\tRNT=",avgRNT,"\tchld=",childs);
+	//cprintf("%s","\n");
+	
+	
+	
+	return 27;
 }
 
+int
+changequantum(int q)
+{
+   if(q<1)
+   q=1;
+
+   else
+	quantum=q;
+
+	
+  
+   //cprintf("%s%d%s%d%s%d%s%d%s%d","WT=",avgWT,"\tSLP=",avgSLP,"\tTR=",avgTRT,"\tRNT=",avgRNT,"\tchld=",childs);
+   avgWT=0;
+   avgSLP=0;
+   avgTRT=0;
+   avgRNT=0;
+   childs=0;
+
+   return 26;
+}
+
+int 
+result(void)
+{
+ 
+	//cprintf("%s%d%s%d%s%d%s%d%s%d","WT=",avgWT,"\tSLP=",avgSLP,"\tTR=",avgTRT,"\tRNT=","\tchld=",childs);
+	cprintf("%s%d%s%d%s%d%s%d%s%d","WT=",avgWT,"\tSLP=",avgSLP,"\tTR=",avgTRT,"\tRNT=",avgRNT,"\tquantum=",quantum);
+
+return 28;
+}

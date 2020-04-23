@@ -78,7 +78,7 @@ int main (void) {
          getchilds(); 
 	 
 	 //while(waitforchilds() != -1) { }
-	waitforchilds();
+	waitshowaverage();
     } //when a program calls waitforchilds, it's a curproc. make a system call to run waitforchilds
 
     /* wait for all child to terminate */
