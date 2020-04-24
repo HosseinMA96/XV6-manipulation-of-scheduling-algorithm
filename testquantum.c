@@ -105,7 +105,8 @@ int main()
         }
 	//waitshowaverage();
     }
-
+	
+    waitforchilds();
     int tell=1;
 
 

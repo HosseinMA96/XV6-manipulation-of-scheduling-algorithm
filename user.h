@@ -25,7 +25,7 @@ int sleep(int);
 int uptime(void);
 int getchilds(void);
 int changepolicy(int);
-int chpr(int pid,int priority);
+int changeCurrentPriority(int priority);
 int waitforchilds(void);
 int changequantum(int);
 int waitshowaverage(void);

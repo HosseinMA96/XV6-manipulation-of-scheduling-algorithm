@@ -126,7 +126,7 @@ void            yield(void);
 int		getchilds(void);
 extern void     updatePtableTimes(void);
 extern int	changepolicy(int);
-int 		chpr(int pid,int priority);
+int 		changeCurrentPriority(int priority);
 int		waitforchilds(void);
 void		updateTime(void);
 int		changequantum(int);

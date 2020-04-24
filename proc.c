@@ -20,7 +20,8 @@ int nextpid = 1;
 extern void forkret(void);
 extern void trapret(void);
 int policy=0; //our policy is 1, and if change policy is called is simply switches between two
-int quantum=131072,counter=0,violate=0,firstTime=1,keepid=-1,avgWT=0,avgSLP=0,avgTRT=0,avgRNT=0,childs=0,lastPid;
+int quantum=131072,counter=0,violate=0,firstTime=1,keepid=-1,avgWT=0,avgSLP=0,avgTRT=0,avgRNT=0,childs=0,lastPid,index=0;
+int record[10000][4]; //An array to record waiting time,termination time, priority and process idfor finished processes so that we can see the impact of priority on waiting time
 struct proc *last;
 
 
@@ -249,7 +250,12 @@ exit(void)
 {
 
   struct proc *curproc = myproc();
-  struct proc *p2=curproc;
+  //struct proc *p2=curproc;
+
+  //record
+  //record[index][0]=p2->pid;
+  //record[index][1]=p2->waitingTime;
+  //record[index++][2]=p2->priority;
 
  
   struct proc *p;
@@ -284,7 +290,13 @@ exit(void)
         wakeup1(initproc);
     }
   }
-  p2->terminationTime=ticks;
+
+  curproc->terminationTime=ticks;
+
+  
+ 
+  
+
   
   // Jump into the scheduler, never to return.
   curproc->state = ZOMBIE;
@@ -367,6 +379,7 @@ waitforchilds(void)
         kfree(p->kstack);
         p->kstack = 0;
         freevm(p->pgdir);
+	record[index][0]=p->pid;
         p->pid = 0;
         p->parent = 0;
         p->name[0] = 0;
@@ -388,6 +401,12 @@ waitforchilds(void)
 	
 	//childs++;
 	//cprintf("%d\n",childs);
+	//record
+ 	
+  	record[index][1]=p->waitingTime;
+  	record[index][2]=p->priority;
+	record[index++][3]=p->terminationTime;
+	//p2->terminationTime=ticks;
 
 //	cprintf("%s%d\t","Quantum : ",QUANTUM);
 	//cprintf("%s%d\t","Waiting ticks : ",p->waitingTime);
@@ -431,6 +450,8 @@ scheduler(void)
 {
   struct proc *p;
   struct proc *p2;
+  struct proc *p3;
+  struct proc *highP;
   struct cpu *c = mycpu();
   c->proc = 0;
   
@@ -440,9 +461,21 @@ scheduler(void)
 
     // Loop over process table looking for process to run.
     acquire(&ptable.lock);
+     
+
+   
     for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
       if(p->state != RUNNABLE)
         continue;
+	
+     highP=p;
+
+    for(p3 = ptable.proc; p3 < &ptable.proc[NPROC]; p3++){
+      if(p3->state==RUNNABLE && p3->cpriority<p->cpriority )
+	  highP=p3;
+	}
+	
+    p=highP;
 
       if(counter !=0){
     	  for(p2 = ptable.proc; p2 < &ptable.proc[NPROC]; p2++)
@@ -457,7 +490,7 @@ scheduler(void)
 	 lastPid=p->pid;
 	
 	counter=(counter+1)%quantum;
-	//cprintf("%d\n",p->pid);
+	
 	
 
 	
@@ -469,6 +502,7 @@ scheduler(void)
       c->proc = p;
       switchuvm(p);
       p->state = RUNNING;
+      p->cpriority+=p->priority;
 
       swtch(&(c->scheduler), p->context);
       switchkvm();
@@ -716,22 +750,13 @@ changepolicy (int p)
   return 23;
 }
 
+//Change priority of current process
 int
-chpr(int pid,int priority)
+changeCurrentPriority(int p)
 {
-	struct proc *p; 
-	acquire(&ptable.lock);
-	
-	for(p=ptable.proc; p<&ptable.proc[NPROC];p++)
-	{
-		if(p->pid == pid)
-		{
-			p->priority=priority;
-			break;
-		}
-	}
-	release(&ptable.lock);
-	return pid;
+	struct proc *curproc = myproc();
+	curproc->priority=p;
+	return 24;
 }
 
 
@@ -768,12 +793,19 @@ changequantum(int t)
    return 26;
 }
 
+
+//After all processes are finished, print out records for all processes to compare priority effect on processes
 int 
 result(void)
 {
  
 	//cprintf("%s%d%s%d%s%d%s%d%s%d","WT=",avgWT,"\tSLP=",avgSLP,"\tTR=",avgTRT,"\tRNT=","\tchld=",childs);
-	cprintf("%s%d%s%d%s%d%s%d%s%d","WT=",avgWT,"\tSLP=",avgSLP,"\tTR=",avgTRT,"\tRNT=",avgRNT,"\tquantum=",quantum);
+	//cprintf("%s%d%s%d%s%d%s%d%s%d","WT=",avgWT,"\tSLP=",avgSLP,"\tTR=",avgTRT,"\tRNT=",avgRNT,"\tquantum=",quantum);
+	for (int i=0;i<index;i++)
+		cprintf("%s%d%s%d%s%d%s%d\n","pid: ",record[i][0],"\twaiting time: ",record[i][1],"\tpriority: ",record[i][2],"\tTermination: ",record[i][3]);
+  
+	
+	
 
 return 28;
 }

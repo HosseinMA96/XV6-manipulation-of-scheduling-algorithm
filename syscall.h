@@ -22,7 +22,7 @@
 #define SYS_close  21
 #define SYS_getchilds  22
 #define SYS_changepolicy 23
-#define SYS_chpr 24
+#define SYS_changeCurrentPriority 24
 #define SYS_waitforchilds 25
 #define SYS_changequantum 26
 #define SYS_waitshowaverage 27
