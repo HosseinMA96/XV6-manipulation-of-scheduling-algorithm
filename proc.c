@@ -19,10 +19,16 @@ static struct proc *initproc;
 int nextpid = 1;
 extern void forkret(void);
 extern void trapret(void);
-int policy=0; //our policy is 1, and if change policy is called is simply switches between two
-int quantum=131072,counter=0,violate=0,firstTime=1,keepid=-1,avgWT=0,avgSLP=0,avgTRT=0,avgRNT=0,childs=0,lastPid,index=0;
+int quantum=2,counter=0,violate=0,firstTime=1,keepid=-1,avgWT=0,avgSLP=0,avgTRT=0,avgRNT=0,childs=0,lastPid,index=0,QQQ=1;
 int record[10000][4]; //An array to record waiting time,termination time, priority and process idfor finished processes so that we can see the impact of priority on waiting time
-struct proc *last;
+
+//hold last processes of default algorithm and default algorithm + quantum so that next time on these queues, we know which process to run next
+
+struct proc *p1;
+struct proc *p0;
+struct proc *p2;
+struct proc *highP;
+int first1=1,first2=1,l1=0,l2=0;
 
 
 static void wakeup1(void *chan);
@@ -93,13 +99,14 @@ allocproc(void)
   return 0;
 
 found:
+ //Initialize the process attributes
   p->state = EMBRYO;
   p->pid = nextpid++;
   p->priority=10;
   p->cpriority=0;
   p->creationTime=ticks;
- // cprintf("%d running time ticks : ",ticks);  
- // cprintf("\n");
+  p->queue=3;
+
 
 
   p->sleepingTime=0;
@@ -449,60 +456,239 @@ void
 scheduler(void)
 {
   struct proc *p;
-  struct proc *p2;
-  struct proc *p3;
-  struct proc *highP;
   struct cpu *c = mycpu();
+  int empty0=1,empty1=1,empty2=1;
+
+  
   c->proc = 0;
   
   for(;;){
     // Enable interrupts on this processor.
+
     sti();
 
     // Loop over process table looking for process to run.
     acquire(&ptable.lock);
+
+
+    for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+        if(p->state != RUNNABLE)
+           continue;
+	
+	
+	//cprintf("%s%d\n\n","My queue is =",p->queue);
+	//int aktiv=0;
+
+	//for(p0 = ptable.proc; p0 < &ptable.proc[NPROC]; p0++)
+	//    if(p0->pid>=1)
+	//	aktiv++;
+
+	
+	//cprintf("%s%d\n","aktive=",aktiv);
+//	cprintf("%s%d\n","Starting Q=",QQQ);
+	
+
+        empty0=1;
+	empty1=1;
+	empty2=1;
+	
+	if(QQQ==1)
+	{
+	 //s   struct proc *temp;
+	
+            
+	    for(highP = ptable.proc; highP < &ptable.proc[NPROC]; highP++)
+      			if((highP->state == RUNNABLE) && (highP->queue==1))
+			{
+			
+				empty0=0;
+				break;
+			}
+
+         
+	    if(empty0==0)
+		{
+	
+		   for(p0 = ptable.proc; p0 < &ptable.proc[NPROC]; p0++)
+		     if(p0->state == RUNNABLE && p0->queue==1 && p0->cpriority<highP->cpriority)
+			highP=p0;
+			
+		   p=highP;
+
+
+		  
+		
+				
+		}
+	  
+		
+	    if(empty0==1)
+	    {
+			QQQ=2;
+			continue;
+	    }
+			
+
+		
+	}
+	
+	if(QQQ==2)
+	{
+	//   int u=l1;
+	   struct proc *temp=ptable.proc;
+	   for(int k=0;k<l1;k++)
+		temp++;
+		
+	   for (p1=temp;p1<&ptable.proc[NPROC];p1++)
+		if((++l1)>0 && p1->state==RUNNABLE && p1->queue==2)
+		  {
+			empty1=0;
+			p=p1;
+
+			if(l1==NPROC)
+			  l1=0;
+
+			break;
+		  }
+		
+	    if(empty1==1)
+	    {
+		l1=0;
+
+		for(p1 = ptable.proc; p1<temp; p1++)
+			if((++l1)>0 && p1->state==RUNNABLE && p1->queue==2)
+			{
+				empty1=0;
+				p=p1;
+
+				if(l1==NPROC)
+			  	  l1=0;
+
+				break;
+			}
+	     
+				
+		if(empty1==1)
+		{
+			QQQ=3;
+			continue;
+		}
+	    }
+		
+	}
+	
+        if(QQQ==3)
+	{
+		//Choose a new process
+		if(counter==0)
+		{
+		
+	             struct proc *temp=ptable.proc;
+	  	     for(int k=0;k<l2;k++)
+		       temp++;
+
+		     for (p2=temp;p2<&ptable.proc[NPROC];p2++)
+		       if((++l2)>0 && p2->state==RUNNABLE && p2->queue==3)
+			{
+				empty2=0;
+				p=p2;
+				if(l2==NPROC)
+			  	   l2=0;
+				lastPid=p2->pid;
+				break;
+			}
+			
+                     if(empty2==1)
+		     {
+			l2=0;
+			for(p2 = ptable.proc; p2<temp; p2++)
+			  if((++l2)>0 && p2->state==RUNNABLE && p2->queue==3)
+			  {
+				empty2=0;
+				p=p2;
+				if(l2==NPROC)
+			  	  l2=0;
+				lastPid=p2->pid;
+				break;
+			  }
+		     }
+
+		    if(empty2==1)
+		    {
+			QQQ=1;
+			continue;
+		    }
+		}
+
+		//Already have a process
+		else	
+		{
+			 for(p2 = ptable.proc; p2 < &ptable.proc[NPROC]; p2++)
+				 if(p2->state==RUNNABLE && (p2->pid==lastPid))
+			 {
+				p=p2;
+				empty2=0;
+				break;
+			 }
+			if(empty2==1)
+			{
+		 	 QQQ=1;
+			// cprintf("%s%d\n\n","Refused, looking pid=",lastPid);
+		
+		//	 for(p2 = ptable.proc; p2 < &ptable.proc[NPROC]; p2++)
+			  //	if(p2->state==RUNNABLE)
+				//	cprintf("%s%d%s%d\n","queue=",p2->queue,"\tpid=",p2->pid);
+			//cprintf("%s","\n\n");
+
+			 counter=0;
+		 	 continue;
+			}
+		}
+		
+		
+			
+		counter=(counter+1)%quantum;
+		//cprintf("%s%d%s%d\n\n","counter=","counter","\tlastPid=","lastPid","\tPid=",p->pid);
+		//cprintf("%s%d%s%d\n\n","counter=",counter,"\tlastPid=",lastPid);
+		
+	}
+	
+     // if(QQQ==3)
+    //  cprintf("%s%d\n","Ending Q=",QQQ); 
+	//if(sq!=QQQ)
+	//cprintf("%s\n\n\n","CAPRUTED!!!");
+	if(empty0 ==0 || empty1 ==0)
+		cprintf("%s\n\n","BINGO!");			 
+		
+      switch (QQQ)
+      {
+	case 1:
+	 QQQ=2;
+         break;
+
+	case 2:
+	 QQQ=3;
+	 break;
+
+	case 3:
+	 if(counter==0)
+	   QQQ=1;
+	 break;
+
+	default:
+	 break;
+     }
      
 
-   
-    for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
-      if(p->state != RUNNABLE)
-        continue;
-	
-     highP=p;
-
-    for(p3 = ptable.proc; p3 < &ptable.proc[NPROC]; p3++){
-      if(p3->state==RUNNABLE && p3->cpriority<p->cpriority )
-	  highP=p3;
-	}
-	
-    p=highP;
-
-      if(counter !=0){
-    	  for(p2 = ptable.proc; p2 < &ptable.proc[NPROC]; p2++)
-             if(p2->pid==lastPid && p2->state==RUNNABLE)
-	     {
-		p=p2;
-		break;
-	      }
-	}
-
-      else
-	 lastPid=p->pid;
-	
-	counter=(counter+1)%quantum;
-	
-	
-
-	
-	
-
+      
       // Switch to chosen process.  It is the process's job
       // to release ptable.lock and then reacquire it
       // before jumping back to us.
+
       c->proc = p;
       switchuvm(p);
       p->state = RUNNING;
-      p->cpriority+=p->priority;
+        
 
       swtch(&(c->scheduler), p->context);
       switchkvm();
@@ -515,9 +701,6 @@ scheduler(void)
 
   }
 }
-
-
-
 
 // Enter scheduler.  Must hold only ptable.lock
 // and have changed proc->state. Saves and restores
@@ -647,7 +830,8 @@ wakeup(void *chan)
 // to user space (see trap in trap.c).
 int
 kill(int pid)
-{
+{	 
+  //cprintf("%s\n\n","Getting killed!!");
   struct proc *p;
 
   acquire(&ptable.lock);
@@ -743,10 +927,28 @@ getchilds(void)
 	return 22;
 }
 
+//Change the s queue of this process to the next process. 0=Default scheduler, 1=
 int
-changepolicy (int p)
+changepolicy (void)
 {
-  policy=(policy+1)%3;
+  struct proc *curproc = myproc();
+   
+  switch(curproc->queue)
+  {
+	case 1:
+		curproc->queue=2;
+		break;
+
+	case 2:
+		curproc->queue=3;
+		break;
+
+	case 3:
+		curproc->queue=1;
+		break;
+  }
+	curproc->queue=3;
+
   return 23;
 }
 
@@ -778,7 +980,7 @@ waitshowaverage(void)
 }
 
 int
-changequantum(int t)
+changequantum(void)
 {
 
    quantum=quantum*2;

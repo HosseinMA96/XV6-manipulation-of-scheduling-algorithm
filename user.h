@@ -24,10 +24,10 @@ char* sbrk(int);
 int sleep(int);
 int uptime(void);
 int getchilds(void);
-int changepolicy(int);
+int changepolicy(void);
 int changeCurrentPriority(int priority);
 int waitforchilds(void);
-int changequantum(int);
+int changequantum(void);
 int waitshowaverage(void);
 int result(void);
 

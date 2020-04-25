@@ -35,7 +35,7 @@ int dosomework(void)
 
 int main (void) {
 
-    changepolicy(2);
+   // changepolicy(2);
     int n1,n2,n3,n4;
 
    

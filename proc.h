@@ -58,6 +58,7 @@ struct proc {
   int runningTime;
   int zombieTime;
   int lastSLeepTick;
+  int queue;
 
 };
 

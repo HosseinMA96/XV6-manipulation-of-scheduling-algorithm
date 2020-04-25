@@ -97,10 +97,9 @@ sys_getchilds(void)
 }
 
 int
-sys_changepolicy(int k)
+sys_changepolicy()
 {
-	int a=k;
-	return changepolicy(a);
+	return changepolicy();
 }
 
 int
@@ -113,9 +112,9 @@ sys_changeCurrentPriority(void)
 }
 
 int
-sys_changequantum(int k)
+sys_changequantum()
 {
-	return changequantum(k);
+	return changequantum();
 }
 
 int

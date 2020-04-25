@@ -4,37 +4,59 @@
 
 int main()
 {
-	//quantum=8
-	changequantum();
-	changequantum();
-	changequantum();
+
 
 	int n[5];
+	
+	changequantum();
+	changequantum();
+	changequantum();
 
 	n[0]=fork();
 	n[1]=fork();
 	n[2]=fork();
 	n[3]=fork();
 	n[4]=fork();
+	
+	
+  
 
 	if(n[0]>0 && n[1]==0 && n[2]==0 && n[3]==0 && n[4]==0)
-		changeCurrentPriority(1);
+	{
+	//   changepolicy();
+	//   changepolicy();
+	}
+	   
 	
 	if(n[0]==0 && n[1]>0 && n[2]==0 && n[3]==0 && n[4]==0)
-		changeCurrentPriority(3);
+	{
+	//   changepolicy();
+	//   changepolicy();
+
+	}
 
 	if(n[0]==0 && n[1]==0 && n[2]>0 && n[3]==0 && n[4]==0)
-		changeCurrentPriority(5);
+	{
+	//   changepolicy();
+	//   changeCurrentPriority(3);
+	   
+	}
 
 	if(n[0]==0 && n[1]==0 && n[2]==0 && n[3]>0 && n[4]==0)
-		changeCurrentPriority(7);
+	{
+	  // changepolicy();
+	  // changeCurrentPriority(2);
+	}
 
 	if(n[0]==0 && n[1]==0 && n[2]==0 && n[3]==0 && n[4]>0)
-		changeCurrentPriority(9);
+	{
+	//   changepolicy();
+	 //  changeCurrentPriority(1);
+	}
 
 	//do some work
-	for(int i=0;i<100;i++)
-		printf(1, "%d\n",i);
+	//for(int i=0;i<100;i++)
+	//s	printf(1, "%d\n",i);
 
 	waitshowaverage();
 	
