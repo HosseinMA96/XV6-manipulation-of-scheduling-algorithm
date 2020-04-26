@@ -901,31 +901,33 @@ getchilds(void)
 
     // Scan through table looking for exited children.
     havekids = 0;
+    int ans=0;
+
     for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
       if(p->parent != curproc)
         continue;
       
 	  if(havekids==0)
 	  {
-	  	havekids++;
-	  	cprintf("%d",p->pid);
+	  	
+	  	ans=p->pid;
 		//cprintf("%s","first\n\n");
 	  }
 	  
 	  else
 	  {
-	  	havekids++;
-	  	cprintf("%d",0);
-	  	cprintf("%d",p->pid);
+	  	
+		ans=ans*100+p->pid;
 		//cprintf("%s","second\n\n");
 	  }
+	 havekids++;
     }
 	cprintf("\n");
 	cprintf("%s\t","totally had : ");
 	cprintf("%d",havekids);
 	cprintf("%s","childs\n\n");
         release(&ptable.lock);
-	return 22;
+	return ans;
 }
 
 //Change the s queue of this process to the next process. 0=Default scheduler, 1=
@@ -1039,6 +1041,9 @@ update(void)
 
 	//cprintf("%s","\nUpdate\n");
 }
+
+
+
 
 
 
