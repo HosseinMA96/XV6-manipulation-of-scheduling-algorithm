@@ -19,8 +19,8 @@ static struct proc *initproc;
 int nextpid = 1;
 extern void forkret(void);
 extern void trapret(void);
-int quantum=2,counter=0,violate=0,firstTime=1,keepid=-1,avgWT=0,avgSLP=0,avgTRT=0,avgRNT=0,childs=0,lastPid,index=0,QQQ=1;
-int record[10000][4]; //An array to record waiting time,termination time, priority and process idfor finished processes so that we can see the impact of priority on waiting time
+int quantum=1,counter=0,violate=0,firstTime=1,keepid=-1,avgWT=0,avgSLP=0,avgTRT=0,avgRNT=0,childs=0,lastPid,index=0,QQQ=1;
+int record[10000][5]; //An array to record waiting time,termination time, priority and process idfor finished processes so that we can see the impact of priority on waiting time
 
 //hold last processes of default algorithm and default algorithm + quantum so that next time on these queues, we know which process to run next
 
@@ -105,7 +105,7 @@ found:
   p->priority=10;
   p->cpriority=0;
   p->creationTime=ticks;
-  p->queue=3;
+  p->queue=2;
 
 
 
@@ -412,7 +412,8 @@ waitforchilds(void)
  	
   	record[index][1]=p->waitingTime;
   	record[index][2]=p->priority;
-	record[index++][3]=p->terminationTime;
+	record[index][3]=p->terminationTime;
+	record[index++][4]=p->queue;
 	//p2->terminationTime=ticks;
 
 //	cprintf("%s%d\t","Quantum : ",QUANTUM);
@@ -514,6 +515,7 @@ scheduler(void)
 			highP=p0;
 			
 		   p=highP;
+		   p->cpriority+=p->priority;
 
 
 		  
@@ -657,8 +659,7 @@ scheduler(void)
     //  cprintf("%s%d\n","Ending Q=",QQQ); 
 	//if(sq!=QQQ)
 	//cprintf("%s\n\n\n","CAPRUTED!!!");
-	if(empty0 ==0 || empty1 ==0)
-		cprintf("%s\n\n","BINGO!");			 
+			 
 		
       switch (QQQ)
       {
@@ -947,7 +948,7 @@ changepolicy (void)
 		curproc->queue=1;
 		break;
   }
-	curproc->queue=3;
+	
 
   return 23;
 }
@@ -1004,7 +1005,7 @@ result(void)
 	//cprintf("%s%d%s%d%s%d%s%d%s%d","WT=",avgWT,"\tSLP=",avgSLP,"\tTR=",avgTRT,"\tRNT=","\tchld=",childs);
 	//cprintf("%s%d%s%d%s%d%s%d%s%d","WT=",avgWT,"\tSLP=",avgSLP,"\tTR=",avgTRT,"\tRNT=",avgRNT,"\tquantum=",quantum);
 	for (int i=0;i<index;i++)
-		cprintf("%s%d%s%d%s%d%s%d\n","pid: ",record[i][0],"\twaiting time: ",record[i][1],"\tpriority: ",record[i][2],"\tTermination: ",record[i][3]);
+		cprintf("%s%d%s%d%s%d%s%d%s%d\n","pid: ",record[i][0],"\tqueue: ",record[i][4],"\twaiting time: ",record[i][1],"\tpriority: ",record[i][2],"\tTermination: ",record[i][3]);
   
 	
 	
